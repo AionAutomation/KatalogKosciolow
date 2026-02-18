@@ -1,0 +1,23 @@
+{
+  "name": "katalog-kosciolow",
+  "version": "1.0.0",
+  "description": "Mikroserwis Nuxt do zbierania, strukturyzacji i indeksowania danych o kościołach (SEO)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "init-db": "node scripts/init-db.js"
+  },
+  "dependencies": {
+    "nuxt": "^3.14.0",
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "latest"
+  }
+}
