@@ -4,7 +4,7 @@
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgis/postgis:16-3.4
     container_name: katalog-directus-postgres
     restart: unless-stopped
     environment:
@@ -13,6 +13,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-directus}
     volumes:
       - directus_postgres_data:/var/lib/postgresql/data
+      - ./scripts/docker/02-postgis.sql:/docker-entrypoint-initdb.d/02-postgis.sql
     networks:
       - directus-net
     healthcheck:

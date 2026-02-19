@@ -109,3 +109,5 @@ docker compose up -d
 ```
 
 Panel: **http://localhost:8056**. Po pierwszym uruchomieniu zaloguj się kontem admin, utwórz token w Directus i ustaw w `.env` aplikacji: `DIRECTUS_URL=http://localhost:8056`, `DIRECTUS_TOKEN=<token>`.
+
+Baza PostgreSQL w Dockerze używa obrazu **PostGIS** (`postgis/postgis:16-3.4`). Rozszerzenie PostGIS jest włączane przy pierwszym starcie (skrypt `scripts/docker/02-postgis.sql`). Jeśli kontener bazy istniał wcześniej bez PostGIS, włącz je ręcznie: `docker exec -it katalog-directus-postgres psql -U directus -d directus -c "CREATE EXTENSION IF NOT EXISTS postgis;"`
