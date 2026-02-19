@@ -1,0 +1,56 @@
+# Directus + PostgreSQL w Dockerze (port 8056 zamiast domyślnego 8055)
+# Uruchomienie: docker compose up -d
+# Panel: http://localhost:8056
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: katalog-directus-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-directus}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-directus}
+      POSTGRES_DB: ${POSTGRES_DB:-directus}
+    volumes:
+      - directus_postgres_data:/var/lib/postgresql/data
+    networks:
+      - directus-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-directus} -d ${POSTGRES_DB:-directus}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  directus:
+    image: directus/directus:11
+    container_name: katalog-directus
+    restart: unless-stopped
+    ports:
+      - "${DIRECTUS_PORT:-8056}:8055"
+    environment:
+      KEY: ${KEY}
+      SECRET: ${SECRET}
+      DB_CLIENT: pg
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${POSTGRES_DB:-directus}
+      DB_USER: ${POSTGRES_USER:-directus}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-directus}
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8056}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+    volumes:
+      - directus_uploads:/directus/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - directus-net
+
+volumes:
+  directus_postgres_data:
+  directus_uploads:
+
+networks:
+  directus-net:
+    driver: bridge
