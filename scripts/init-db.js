@@ -60,6 +60,27 @@ const OCENA_ZBIORCZA = {
   ],
 }
 
+// Struktura kościelna: archidiecezja (np. Archidiecezja białostocka)
+
+const ARCHIDIECEZJA = {
+  collection: 'archidiecezja',
+  meta: { icon: 'account_balance', note: 'Archidiecezja (np. Archidiecezja białostocka)' },
+  fields: [
+    { field: 'nazwa', type: 'string', schema: {}, meta: { interface: 'input' } },
+  ],
+}
+
+// Dekanat (np. Dekanat Białystok Bacieczki) – należy do archidiecezji
+
+const DEKANAT = {
+  collection: 'dekanat',
+  meta: { icon: 'groups', note: 'Dekanat (np. Dekanat Białystok Bacieczki)' },
+  fields: [
+    { field: 'nazwa', type: 'string', schema: {}, meta: { interface: 'input' } },
+    { field: 'archidiecezja_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } },
+  ],
+}
+
 // CatholicChurch = Place + Thing
 // Thing: name→string, description→text, disambiguatingDescription→text, identifier→string, url→string,
 //   potentialAction→json(Action), additionalType→json, alternateName→json, mainEntityOfPage→string, sameAs→json(URL), subjectOf→json,
@@ -99,6 +120,7 @@ const KOSCIOL_KATOLICKI = {
     { field: 'adres_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } },       // address
     { field: 'organizacja_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } }, // owner
     { field: 'ocenaZbiorcza_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } }, // aggregateRating
+    { field: 'dekanat_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } },     // dekanat (np. Dekanat Białystok Bacieczki)
   ],
 }
 
@@ -215,6 +237,8 @@ const RELATIONS = [
   ['kosciol_katolicki', 'adres_pocztowy', 'adres_id'],
   ['kosciol_katolicki', 'organizacja', 'organizacja_id'],
   ['kosciol_katolicki', 'ocena_zbiorcza', 'ocenaZbiorcza_id'],
+  ['kosciol_katolicki', 'dekanat', 'dekanat_id'],
+  ['dekanat', 'archidiecezja', 'archidiecezja_id'],
   ['cechy_obiektu', 'kosciol_katolicki', 'kosciol_id'],
   ['relacje_przestrzenne', 'kosciol_katolicki', 'kosciol_id'],
   ['certyfikat', 'kosciol_katolicki', 'kosciol_id'],
@@ -344,6 +368,8 @@ async function main() {
     await ensureCollection(directus, ADRES_POCZTOWY)
     await ensureCollection(directus, ORGANIZACJA)
     await ensureCollection(directus, OCENA_ZBIORCZA)
+    await ensureCollection(directus, ARCHIDIECEZJA)
+    await ensureCollection(directus, DEKANAT)
 
     console.log('--- KROK 2: Kolekcja główna KosciolKatolicki ---')
     await ensureCollection(directus, KOSCIOL_KATOLICKI)
@@ -352,6 +378,7 @@ async function main() {
     await ensureRelation(directus, 'kosciol_katolicki', 'adres_pocztowy', 'adres_id')
     await ensureRelation(directus, 'kosciol_katolicki', 'organizacja', 'organizacja_id')
     await ensureRelation(directus, 'kosciol_katolicki', 'ocena_zbiorcza', 'ocenaZbiorcza_id')
+    await ensureRelation(directus, 'kosciol_katolicki', 'dekanat', 'dekanat_id')
     await ensureRelation(directus, 'kosciol_katolicki', 'directus_files', 'logo')
     await ensureRelation(directus, 'kosciol_katolicki', 'directus_files', 'obraz')
     await ensureRelation(directus, 'kosciol_katolicki', 'directus_files', 'zdjecie')
