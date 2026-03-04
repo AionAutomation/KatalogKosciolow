@@ -11,13 +11,19 @@ export default defineNuxtConfig({
       url: process.env.DIRECTUS_URL || 'http://localhost:8056',
       token: process.env.DIRECTUS_TOKEN || '',
     },
-    botAccount: {
-      active: process.env.BOT_AKTYWNE !== 'false',
+    public: {
+      directusUrl: process.env.DIRECTUS_URL || 'http://localhost:8056',
+      siteUrl: process.env.SITE_URL || 'http://localhost:3000',
     },
   },
   srcDir: 'src',
+  serverDir: 'server',
   alias: {
     '#config': join(__dirname, 'config'),
-    '#processor': join(__dirname, 'src', 'processor.js'),
+  },
+  nitro: {
+    alias: {
+      '#config': join(__dirname, 'config'),
+    },
   },
 })

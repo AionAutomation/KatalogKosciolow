@@ -1,6 +1,6 @@
 # Katalog kościołów – mikroserwis Nuxt
 
-Autonomiczny mikroserwis do zbierania, strukturyzacji i indeksowania danych o kościołach. Przyjmuje przefiltrowane JSON z Dify, wzbogaca o parametry SEO i zapisuje w Directus (port 8056).
+Frontend Nuxt z danymi w Directus (port 8056). Dane są dodawane bezpośrednio do Directus.
 
 ## Wymagania
 
@@ -12,7 +12,7 @@ Autonomiczny mikroserwis do zbierania, strukturyzacji i indeksowania danych o ko
 
 ```bash
 cp .env.example .env
-# Edytuj .env: DIRECTUS_URL, DIRECTUS_TOKEN, opcjonalnie BOT_AKTYWNE
+# Edytuj .env: DIRECTUS_URL, DIRECTUS_TOKEN
 
 npm install
 npm run init-db
@@ -24,44 +24,19 @@ npm run init-db
 npm run dev
 ```
 
-Endpoint: **POST /church-task** – odbiera dane z wtyczki Dify.
-
 ## Konfiguracja (.env)
 
 | Zmienna | Opis | Domyślnie |
 |--------|------|-----------|
 | `DIRECTUS_URL` | Adres Directus | `http://localhost:8056` |
 | `DIRECTUS_TOKEN` | Token statyczny (admin) | – |
-| `BOT_AKTYWNE` | Włączenie operacji bota (`true`/`false`) | `true` |
 
 ## Struktura
 
 - **config/AuthService.js** – klient HTTP do Directus (domyślnie port 8056)
-- **scripts/init-db.js** – tworzenie kolekcji `sk_koscioly` i pól w Directus
-- **src/processor.js** – przetwarzanie JSON z Dify: walidacja, slug, flaga `aktywne`
-- **server/routes/church-task.post.js** – endpoint POST /church-task dla Dify
-
-## Schemat kolekcji `sk_koscioly`
-
-| Pole | Typ | Opis |
-|------|-----|------|
-| nazwa | string | Nazwa kościoła |
-| slug | string (unique) | Przyjazny URL z nazwy |
-| opis_seo | text | Meta description |
-| ludzie | json | Duchowieństwo i pracownicy |
-| styl_architektoniczny | string | Np. Gotyk, Barok |
-| adres_full | string | Pełny adres (lokalne SEO) |
-| metadata | json | Surowe dane z Perplexity |
-
-## API – POST /church-task
-
-**Request:** body JSON z Dify (min. `nazwa`).
-
-**Sukces:** `{ "success": true }`
-
-**Błąd:** `{ "success": false, "error": "opis błędu" }`
-
-Przykłady błędów: brak lub pusta `nazwa`, wyłączony bot (`BOT_AKTYWNE=false`), błąd zapisu do Directus.
+- **scripts/init-db.js** – tworzenie kolekcji w Directus
+- **lib/slugify.js** – funkcja slugify (używana przez skrypty)
+- **server/api/** – endpointy API do pobierania danych z Directus
 
 ## Skrypty
 

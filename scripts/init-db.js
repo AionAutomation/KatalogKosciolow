@@ -22,8 +22,129 @@ import { createDirectusClient } from '../config/AuthService.js'
 const DIRECTUS_PORT = 8056
 const BASE_URL = process.env.DIRECTUS_URL || `http://localhost:${DIRECTUS_PORT}`
 
+// CatholicChurch = Place + Thing
+// Thing: name→string, description→text, disambiguatingDescription→text, identifier→string, url→string,
+//   potentialAction→json(Action), additionalType→json, alternateName→json, mainEntityOfPage→string, sameAs→json(URL), subjectOf→json,
+//   image/logo→uuid(file). Place: address→M2O, aggregateRating→M2O, telephone/faxNumber/slogan/keywords→string,
+//   latitude/longitude→float, openingHoursSpecification→string(+tabela), hasMap/hasGS1DigitalLink→string(URL), photo→uuid(file).
+
+const KOSCIOL_KATOLICKI = {
+  collection: 'kosciol_katolicki',
+  meta: { icon: 'church', note: 'CatholicChurch = Place + Thing (schema.org)' },
+  fields: [
+    // Thing — Text / URL (slug: najpierw nullable, potem uruchom scripts/fill-slug-existing.js i ustaw wymagane w Directus)
+    { field: 'slug', type: 'string', schema: { is_nullable: true }, meta: { interface: 'input', note: 'Unikalny URL (np. kosciol-sw-anny-warszawa). Dla istniejącej bazy: node scripts/fill-slug-existing.js' } },
+    { field: 'nazwa', type: 'string', schema: {}, meta: { interface: 'input' } },                    // name (Text)
+    { field: 'opis', type: 'text', schema: {}, meta: { interface: 'input-rich-text-html' } },         // description (Text)
+    { field: 'krotkiOpisWyrozniajacy', type: 'text', schema: {}, meta: { interface: 'input-multiline' } }, // disambiguatingDescription (Text)
+    { field: 'stronaWww', type: 'string', schema: {}, meta: { interface: 'input' } },                  // url (URL)
+    { field: 'alternatywnaNazwa', type: 'text', schema: {}, meta: { interface: 'input-multiline', note: 'Jedna nazwa w każdej linii (alternateName)' } }, // alternateName (Text, array)
+    { field: 'glownyTematStrony', type: 'string', schema: {}, meta: { interface: 'input' } },        // mainEntityOfPage (CreativeWork or URL)
+    { field: 'linkiZewnetrzne', type: 'text', schema: {}, meta: { interface: 'input-multiline', note: 'Jedna domena/URL w każdej linii (sameAs)' } },     // sameAs (URL, array)
+    // Place — Text, Number, URL
+    { field: 'telefon', type: 'string', schema: {}, meta: { interface: 'input' } },                  // telephone (Text)
+    { field: 'faks', type: 'string', schema: {}, meta: { interface: 'input' } },                     // faxNumber (Text)
+    { field: 'slogan', type: 'string', schema: {}, meta: { interface: 'input' } },                   // slogan (Text)
+    { field: 'slowaKluczowe', type: 'string', schema: {}, meta: { interface: 'input' } },            // keywords (Text or URL)
+    { field: 'szerokoscGeograficzna', type: 'float', schema: {}, meta: { interface: 'input' } },      // latitude (Number)
+    { field: 'dlugoscGeograficzna', type: 'float', schema: {}, meta: { interface: 'input' } },       // longitude (Number)
+    { field: 'godzinyOtwarcia', type: 'string', schema: {}, meta: { interface: 'input' } },           // openingHoursSpecification (skrót; szczegóły w tabeli)
+    { field: 'mapaUrl', type: 'string', schema: {}, meta: { interface: 'input' } },                  // hasMap (Map or URL)
+    { field: 'linkCyfrowyGS1', type: 'string', schema: {}, meta: { interface: 'input' } },          // hasGS1DigitalLink (URL)
+    { field: 'logo', type: 'uuid', schema: { is_nullable: true }, meta: { interface: 'file-image' } }, // logo (ImageObject or URL)
+    { field: 'obraz', type: 'uuid', schema: { is_nullable: true }, meta: { interface: 'file-image' } }, // image (ImageObject or URL)
+    { field: 'zdjecie', type: 'uuid', schema: { is_nullable: true }, meta: { interface: 'file-image' } }, // photo (ImageObject or Photograph)
+    // M2O — Place: address (PostalAddress), aggregateRating (AggregateRating); Thing: owner (Organization)
+    { field: 'adres_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } },       // address
+    { field: 'organizacja_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } }, // owner
+    { field: 'ocenaZbiorcza_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } }, // aggregateRating
+    { field: 'dekanat_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } },     // dekanat (np. Dekanat Białystok Bacieczki)
+  ],
+}
+
+// Place: event → Event. Event: name→Text, startDate→DateTime, endDate→DateTime
+
+const WYDARZENIE = {
+  collection: 'wydarzenie',
+  meta: { icon: 'event', note: 'Event (schema.org)' },
+  fields: [
+    { field: 'nazwa', type: 'string', schema: {}, meta: { interface: 'input' } },   // name (Text)
+    { field: 'dataRozpoczecia', type: 'dateTime', schema: {}, meta: { interface: 'datetime' } }, // startDate (DateTime)
+    { field: 'dataZakonczenia', type: 'dateTime', schema: {}, meta: { interface: 'datetime' } }, // endDate (DateTime)
+    { field: 'kosciol_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } },
+  ],
+}
+
+// Place: review → Review. Review: author→Person or Text, reviewBody→Text, reviewRating→Integer or Rating
+
+const OPINIA = {
+  collection: 'opinia',
+  meta: { icon: 'rate_review', note: 'Review (schema.org)' },
+  fields: [
+    { field: 'autor', type: 'string', schema: {}, meta: { interface: 'input' } },       // author (Text)
+    { field: 'trescOpinii', type: 'text', schema: {}, meta: { interface: 'input-multiline' } }, // reviewBody (Text)
+    { field: 'ocena', type: 'integer', schema: {}, meta: { interface: 'input' } },       // reviewRating (Integer)
+    { field: 'kosciol_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } },
+  ],
+}
 // --- KROK 1: Tabele słownikowe ---
 // PostalAddress: streetAddress, addressLocality, postalCode, addressCountry → Text → string
+
+// Region (województwo) – GEO
+const REGION = {
+  collection: 'region',
+  meta: { icon: 'public', note: 'Region / województwo (GEO)' },
+  fields: [
+    { field: 'slug', type: 'string', schema: {}, meta: { interface: 'input' } },
+    { field: 'nazwa', type: 'string', schema: {}, meta: { interface: 'input' } },
+  ],
+}
+
+// Miasto – GEO
+const MIASTO = {
+  collection: 'miasto',
+  meta: { icon: 'location_city', note: 'Miasto (GEO)' },
+  fields: [
+    { field: 'slug', type: 'string', schema: {}, meta: { interface: 'input' } },
+    { field: 'nazwa', type: 'string', schema: {}, meta: { interface: 'input' } },
+    { field: 'region_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } },
+  ],
+}
+
+// Kategoria kościoła (zabytkowe, nowoczesne, z parkingiem)
+const KATEGORIA = {
+  collection: 'kategoria',
+  meta: { icon: 'category', note: 'Kategoria kościoła' },
+  fields: [
+    { field: 'slug', type: 'string', schema: {}, meta: { interface: 'input' } },
+    { field: 'nazwa', type: 'string', schema: {}, meta: { interface: 'input' } },
+    { field: 'opis', type: 'text', schema: { is_nullable: true }, meta: { interface: 'input-multiline' } },
+  ],
+}
+
+// M2M: kościół ↔ kategoria
+const KOSCIOL_KATEGORIA = {
+  collection: 'kosciol_kategoria',
+  meta: { icon: 'link', note: 'Relacja kościół–kategoria (M2M)' },
+  fields: [
+    { field: 'kosciol_id', type: 'integer', schema: {}, meta: { interface: 'select-dropdown-m2o' } },
+    { field: 'kategoria_id', type: 'integer', schema: {}, meta: { interface: 'select-dropdown-m2o' } },
+  ],
+}
+
+// Blog post
+const BLOG_POST = {
+  collection: 'blog_post',
+  meta: { icon: 'article', note: 'Wpis na blogu' },
+  fields: [
+    { field: 'slug', type: 'string', schema: {}, meta: { interface: 'input' } },
+    { field: 'tytul', type: 'string', schema: {}, meta: { interface: 'input' } },
+    { field: 'tresc', type: 'text', schema: {}, meta: { interface: 'input-rich-text-html' } },
+    { field: 'dataPublikacji', type: 'dateTime', schema: { is_nullable: true }, meta: { interface: 'datetime' } },
+    { field: 'obraz_id', type: 'uuid', schema: { is_nullable: true }, meta: { interface: 'file-image' } },
+    { field: 'opis_seo', type: 'text', schema: { is_nullable: true }, meta: { interface: 'input-multiline' } },
+  ],
+}
 
 const ADRES_POCZTOWY = {
   collection: 'adres_pocztowy',
@@ -33,6 +154,7 @@ const ADRES_POCZTOWY = {
     { field: 'miejscowosc', type: 'string', schema: {}, meta: { interface: 'input' } },     // addressLocality
     { field: 'kodPocztowy', type: 'string', schema: {}, meta: { interface: 'input' } },     // postalCode
     { field: 'kraj', type: 'string', schema: {}, meta: { interface: 'input' } },           // addressCountry
+    { field: 'miasto_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o', note: 'Miasto (GEO)' } },
   ],
 }
 
@@ -78,49 +200,6 @@ const DEKANAT = {
   fields: [
     { field: 'nazwa', type: 'string', schema: {}, meta: { interface: 'input' } },
     { field: 'archidiecezja_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } },
-  ],
-}
-
-// CatholicChurch = Place + Thing
-// Thing: name→string, description→text, disambiguatingDescription→text, identifier→string, url→string,
-//   potentialAction→json(Action), additionalType→json, alternateName→json, mainEntityOfPage→string, sameAs→json(URL), subjectOf→json,
-//   image/logo→uuid(file). Place: address→M2O, aggregateRating→M2O, telephone/faxNumber/slogan/keywords→string,
-//   latitude/longitude→float, openingHoursSpecification→string(+tabela), hasMap/hasGS1DigitalLink→string(URL), photo→uuid(file).
-
-const KOSCIOL_KATOLICKI = {
-  collection: 'kosciol_katolicki',
-  meta: { icon: 'church', note: 'CatholicChurch = Place + Thing (schema.org)' },
-  fields: [
-    // Thing — Text / URL
-    { field: 'nazwa', type: 'string', schema: {}, meta: { interface: 'input' } },                    // name (Text)
-    { field: 'opis', type: 'text', schema: {}, meta: { interface: 'input-rich-text-html' } },         // description (Text)
-    { field: 'krotkiOpisWyrozniajacy', type: 'text', schema: {}, meta: { interface: 'input-multiline' } }, // disambiguatingDescription (Text)
-    { field: 'identyfikator', type: 'string', schema: {}, meta: { interface: 'input' } },             // identifier (PropertyValue or Text or URL)
-    { field: 'stronaWww', type: 'string', schema: {}, meta: { interface: 'input' } },                  // url (URL)
-    { field: 'potencjalnaAkcja', type: 'json', schema: {}, meta: { interface: 'input-code' } },       // potentialAction (Action – obiekt)
-    { field: 'alternatywnaNazwa', type: 'text', schema: {}, meta: { interface: 'input-multiline', note: 'Jedna nazwa w każdej linii (alternateName)' } }, // alternateName (Text, array)
-    { field: 'dodatkowyTyp', type: 'text', schema: {}, meta: { interface: 'input-multiline', note: 'Typ lub URL w każdej linii (additionalType)' } },      // additionalType (Text or URL, array)
-    { field: 'glownyTematStrony', type: 'string', schema: {}, meta: { interface: 'input' } },        // mainEntityOfPage (CreativeWork or URL)
-    { field: 'linkiZewnetrzne', type: 'text', schema: {}, meta: { interface: 'input-multiline', note: 'Jedna domena/URL w każdej linii (sameAs)' } },     // sameAs (URL, array)
-    { field: 'tematDla', type: 'json', schema: {}, meta: { interface: 'input-code' } },              // subjectOf (CreativeWork or Event – obiekt)
-    // Place — Text, Number, URL
-    { field: 'telefon', type: 'string', schema: {}, meta: { interface: 'input' } },                  // telephone (Text)
-    { field: 'faks', type: 'string', schema: {}, meta: { interface: 'input' } },                     // faxNumber (Text)
-    { field: 'slogan', type: 'string', schema: {}, meta: { interface: 'input' } },                   // slogan (Text)
-    { field: 'slowaKluczowe', type: 'string', schema: {}, meta: { interface: 'input' } },            // keywords (Text or URL)
-    { field: 'szerokoscGeograficzna', type: 'float', schema: {}, meta: { interface: 'input' } },      // latitude (Number)
-    { field: 'dlugoscGeograficzna', type: 'float', schema: {}, meta: { interface: 'input' } },       // longitude (Number)
-    { field: 'godzinyOtwarcia', type: 'string', schema: {}, meta: { interface: 'input' } },           // openingHoursSpecification (skrót; szczegóły w tabeli)
-    { field: 'mapaUrl', type: 'string', schema: {}, meta: { interface: 'input' } },                  // hasMap (Map or URL)
-    { field: 'linkCyfrowyGS1', type: 'string', schema: {}, meta: { interface: 'input' } },          // hasGS1DigitalLink (URL)
-    { field: 'logo', type: 'uuid', schema: { is_nullable: true }, meta: { interface: 'file-image' } }, // logo (ImageObject or URL)
-    { field: 'obraz', type: 'uuid', schema: { is_nullable: true }, meta: { interface: 'file-image' } }, // image (ImageObject or URL)
-    { field: 'zdjecie', type: 'uuid', schema: { is_nullable: true }, meta: { interface: 'file-image' } }, // photo (ImageObject or Photograph)
-    // M2O — Place: address (PostalAddress), aggregateRating (AggregateRating); Thing: owner (Organization)
-    { field: 'adres_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } },       // address
-    { field: 'organizacja_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } }, // owner
-    { field: 'ocenaZbiorcza_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } }, // aggregateRating
-    { field: 'dekanat_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } },     // dekanat (np. Dekanat Białystok Bacieczki)
   ],
 }
 
@@ -192,32 +271,6 @@ const DODATKOWA_WLASCIWOSC = {
   ],
 }
 
-// Place: review → Review. Review: author→Person or Text, reviewBody→Text, reviewRating→Integer or Rating
-
-const OPINIA = {
-  collection: 'opinia',
-  meta: { icon: 'rate_review', note: 'Review (schema.org)' },
-  fields: [
-    { field: 'autor', type: 'string', schema: {}, meta: { interface: 'input' } },       // author (Text)
-    { field: 'trescOpinii', type: 'text', schema: {}, meta: { interface: 'input-multiline' } }, // reviewBody (Text)
-    { field: 'ocena', type: 'integer', schema: {}, meta: { interface: 'input' } },       // reviewRating (Integer)
-    { field: 'kosciol_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } },
-  ],
-}
-
-// Place: event → Event. Event: name→Text, startDate→DateTime, endDate→DateTime
-
-const WYDARZENIE = {
-  collection: 'wydarzenie',
-  meta: { icon: 'event', note: 'Event (schema.org)' },
-  fields: [
-    { field: 'nazwa', type: 'string', schema: {}, meta: { interface: 'input' } },   // name (Text)
-    { field: 'dataRozpoczecia', type: 'dateTime', schema: {}, meta: { interface: 'datetime' } }, // startDate (DateTime)
-    { field: 'dataZakonczenia', type: 'dateTime', schema: {}, meta: { interface: 'datetime' } }, // endDate (DateTime)
-    { field: 'kosciol_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } },
-  ],
-}
-
 // Place: openingHoursSpecification / specialOpeningHoursSpecification. DayOfWeek→Text, opens/closes→Time, special→Boolean
 
 const GODZINY_OTWARCIA_SZCZEGOLY = {
@@ -232,6 +285,35 @@ const GODZINY_OTWARCIA_SZCZEGOLY = {
   ],
 }
 
+// Nabożeństwa – msze św., różaniec, adoracja itp.
+const NABOZENSTWO = {
+  collection: 'nabozenstwo',
+  meta: { icon: 'church', note: 'Nabożeństwa (msze św., różaniec, adoracja)' },
+  fields: [
+    { field: 'nazwa', type: 'string', schema: {}, meta: { interface: 'input', note: 'Np. Msza św., Różaniec, Adoracja' } },
+    { field: 'dzienTygodnia', type: 'string', schema: { is_nullable: true }, meta: { interface: 'input', note: 'Np. Niedziela, Dni powszednie, Sobota' } },
+    { field: 'godzina', type: 'string', schema: {}, meta: { interface: 'input', note: 'Godzina lub godziny, np. 8:00 lub 8:00, 10:00, 12:00' } },
+    { field: 'uwagi', type: 'text', schema: { is_nullable: true }, meta: { interface: 'input-multiline', note: 'Opcjonalne uwagi' } },
+    { field: 'kosciol_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } },
+  ],
+}
+
+// Duchowieństwo – kapłani i osoby związane z parafią/kościołem
+const DUCHOWIENSTWO = {
+  collection: 'duchowienstwo',
+  meta: { icon: 'person', note: 'Duchowieństwo (ks., imię, nazwisko, rola, dyżur w konfesjonale)' },
+  fields: [
+    { field: 'tytul', type: 'string', schema: { is_nullable: true }, meta: { interface: 'input', note: 'Tytuł przed imieniem, np. ks., bp., o.' } },
+    { field: 'imie', type: 'string', schema: {}, meta: { interface: 'input' } },
+    { field: 'nazwisko', type: 'string', schema: {}, meta: { interface: 'input' } },
+    { field: 'rola', type: 'string', schema: { is_nullable: true }, meta: { interface: 'input', note: 'Rola w parafii/kościele' } },
+    { field: 'dodatkowo', type: 'string', schema: { is_nullable: true }, meta: { interface: 'input', note: 'Np. Wicedziekan, opiekun, katecheta' } },
+    { field: 'kontakt', type: 'string', schema: { is_nullable: true }, meta: { interface: 'input', note: 'Telefon, e-mail itp.' } },
+    { field: 'dyzurKonfesjonal', type: 'text', schema: { is_nullable: true }, meta: { interface: 'input-multiline', note: 'Dyżur w konfesjonale, np. niedziela podczas Mszy św. o 8:30' } },
+    { field: 'kosciol_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } },
+  ],
+}
+
 // Relacje M2O: [ many_collection, one_collection, field_many ]
 const RELATIONS = [
   ['kosciol_katolicki', 'adres_pocztowy', 'adres_id'],
@@ -239,6 +321,11 @@ const RELATIONS = [
   ['kosciol_katolicki', 'ocena_zbiorcza', 'ocenaZbiorcza_id'],
   ['kosciol_katolicki', 'dekanat', 'dekanat_id'],
   ['dekanat', 'archidiecezja', 'archidiecezja_id'],
+  ['miasto', 'region', 'region_id'],
+  ['adres_pocztowy', 'miasto', 'miasto_id'],
+  ['kosciol_kategoria', 'kosciol_katolicki', 'kosciol_id'],
+  ['kosciol_kategoria', 'kategoria', 'kategoria_id'],
+  ['blog_post', 'directus_files', 'obraz_id'],
   ['cechy_obiektu', 'kosciol_katolicki', 'kosciol_id'],
   ['relacje_przestrzenne', 'kosciol_katolicki', 'kosciol_id'],
   ['certyfikat', 'kosciol_katolicki', 'kosciol_id'],
@@ -246,13 +333,61 @@ const RELATIONS = [
   ['opinia', 'kosciol_katolicki', 'kosciol_id'],
   ['wydarzenie', 'kosciol_katolicki', 'kosciol_id'],
   ['godziny_otwarcia_szczegoly', 'kosciol_katolicki', 'kosciol_id'],
+  ['nabozenstwo', 'kosciol_katolicki', 'kosciol_id'],
+  ['duchowienstwo', 'kosciol_katolicki', 'kosciol_id'],
 ]
+
+// Układ w panelu Directus: 1) Główne (bez grupy), 2) Słowniki, 3) Metadane Kościoła
+// group musi być nazwą istniejącej kolekcji (folder = kolekcja bez tabeli, schema: null)
+const FOLDER_COLLECTIONS = {
+  slowniki: { icon: 'folder', note: 'Słowniki / struktura kościelna' },
+  metadane_kosciola: { icon: 'folder', note: 'Metadane i szczegóły kościoła' },
+  geo: { icon: 'folder', note: 'GEO – miasta i regiony' },
+  content: { icon: 'folder', note: 'Treści (blog)' },
+}
+const COLLECTION_LAYOUT = {
+  kosciol_katolicki: { group: null, sort: 1 },
+  wydarzenie: { group: null, sort: 2 },
+  opinia: { group: null, sort: 3 },
+  blog_post: { group: 'content', sort: 4 },
+  archidiecezja: { group: 'slowniki', sort: 10 },
+  dekanat: { group: 'slowniki', sort: 11 },
+  organizacja: { group: 'slowniki', sort: 12 },
+  region: { group: 'geo', sort: 13 },
+  miasto: { group: 'geo', sort: 14 },
+  kategoria: { group: 'geo', sort: 15 },
+  kosciol_kategoria: { group: 'geo', sort: 16 },
+  adres_pocztowy: { group: 'metadane_kosciola', sort: 20 },
+  relacje_przestrzenne: { group: 'metadane_kosciola', sort: 21 },
+  godziny_otwarcia_szczegoly: { group: 'metadane_kosciola', sort: 22 },
+  nabozenstwo: { group: 'metadane_kosciola', sort: 23 },
+  dodatkowa_wlasciwosc: { group: 'metadane_kosciola', sort: 24 },
+  ocena_zbiorcza: { group: 'metadane_kosciola', sort: 25 },
+  certyfikat: { group: 'metadane_kosciola', sort: 26 },
+  cechy_obiektu: { group: 'metadane_kosciola', sort: 27 },
+  duchowienstwo: { group: 'metadane_kosciola', sort: 28 },
+}
 
 // --- Helper: pobierz listę kolekcji ---
 async function getCollections(directus) {
   const raw = await directus.get('/collections').catch(() => null)
   const list = Array.isArray(raw) ? raw : (raw?.data ?? [])
   return list
+}
+
+// --- Kolekcje‑foldery (bez tabeli): group w directus_collections wskazuje na nazwę kolekcji ---
+async function ensureFolderCollection(directus, collection, meta) {
+  const collections = await getCollections(directus)
+  if (collections.some((c) => c.collection === collection)) {
+    console.log(`[OK] Folder "${collection}" już istnieje.`)
+    return
+  }
+  await directus.post('/collections', {
+    collection,
+    meta: { icon: meta?.icon ?? 'folder', note: meta?.note ?? '' },
+    schema: null,
+  })
+  console.log(`[+] Utworzono folder: ${collection}`)
 }
 
 // --- Helper: pobierz listę pól w kolekcji ---
@@ -291,7 +426,16 @@ async function ensureCollection(directus, def) {
 
   await directus.post('/collections', {
     collection,
-    meta: { icon: meta?.icon ?? 'folder', note: meta?.note ?? '' },
+    meta: {
+      icon: meta?.icon ?? 'folder',
+      note: meta?.note ?? '',
+      ...(COLLECTION_LAYOUT[collection]
+        ? {
+            group: COLLECTION_LAYOUT[collection].group,
+            sort: COLLECTION_LAYOUT[collection].sort,
+          }
+        : {}),
+    },
     schema: {},
   })
   console.log(`[+] Utworzono kolekcję: ${collection}`)
@@ -350,6 +494,22 @@ async function ensureRelation(directus, manyCollection, oneCollection, fieldMany
   throw lastErr
 }
 
+// --- Układ sidebaru: grupy (foldery) i kolejność kolekcji ---
+async function applyCollectionLayout(directus) {
+  console.log('--- Układ panelu: grupy i kolejność ---')
+  for (const [collection, { group, sort }] of Object.entries(COLLECTION_LAYOUT)) {
+    try {
+      await directus.patch(`/collections/${collection}`, {
+        meta: { group, sort },
+      })
+      console.log(`  [OK] ${collection} → group: ${group ?? '(główne)'}, sort: ${sort}`)
+    } catch (err) {
+      const msg = err.response?.data?.errors?.[0]?.message || err.message
+      console.warn(`  [!] ${collection}: ${msg}`)
+    }
+  }
+}
+
 // --- Main ---
 async function main() {
   const url = process.env.DIRECTUS_URL || BASE_URL
@@ -361,10 +521,18 @@ async function main() {
 
   const directus = createDirectusClient({ url, token })
   console.log('Directus URL:', url)
-  console.log('--- KROK 1: Tabele słownikowe ---')
+  console.log('--- KROK 0: Foldery (grupy w panelu) ---')
 
   try {
-    // KROK 1: słowniki
+    for (const [name, meta] of Object.entries(FOLDER_COLLECTIONS)) {
+      await ensureFolderCollection(directus, name, meta)
+    }
+    console.log('--- KROK 1: Tabele słownikowe ---')
+    await ensureCollection(directus, REGION)
+    await ensureCollection(directus, MIASTO)
+    await ensureCollection(directus, KATEGORIA)
+    await ensureCollection(directus, KOSCIOL_KATEGORIA)
+    await ensureCollection(directus, BLOG_POST)
     await ensureCollection(directus, ADRES_POCZTOWY)
     await ensureCollection(directus, ORGANIZACJA)
     await ensureCollection(directus, OCENA_ZBIORCZA)
@@ -391,12 +559,16 @@ async function main() {
     await ensureCollection(directus, OPINIA)
     await ensureCollection(directus, WYDARZENIE)
     await ensureCollection(directus, GODZINY_OTWARCIA_SZCZEGOLY)
+    await ensureCollection(directus, NABOZENSTWO)
+    await ensureCollection(directus, DUCHOWIENSTWO)
 
     console.log('--- Relacje M2O: rozszerzenia -> KosciolKatolicki ---')
     for (const [manyCol, oneCol, fieldMany] of RELATIONS) {
       if (manyCol === 'kosciol_katolicki') continue // już zrobione
       await ensureRelation(directus, manyCol, oneCol, fieldMany)
     }
+
+    await applyCollectionLayout(directus)
 
     console.log('--- Zakończono. Schemat schema.org/CatholicChurch jest gotowy. ---')
   } catch (err) {

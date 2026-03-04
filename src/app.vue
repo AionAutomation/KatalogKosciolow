@@ -1,7 +1,8 @@
 <template>
   <div class="root">
-    <h1>Katalog kościołów</h1>
-    <p>Mikroserwis Nuxt – endpoint: <code>POST /church-task</code></p>
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
   </div>
 </template>
 
