@@ -1,0 +1,32 @@
+---
+description: Wzorce API i integracji z Directus
+globs: "server/**/*.js"
+alwaysApply: false
+---
+
+# Directus + Nuxt API
+
+## Klient
+
+- `createDirectusClient` z config/AuthService.js
+- URL i token z `useRuntimeConfig().directus`
+
+## Kolekcje
+
+- `kosciol_katolicki`, `adres_id`, `organizacja_id`, `dekanat_id`, `nabozenstwa`, `duchowienstwo` (wg server/api/koscioly/[slug].get.js)
+
+## Obsługa błędów
+
+- `createError` z `statusCode` i `statusMessage`
+- Nie przekazywać surowych błędów Directus do klienta
+
+## Model kościoła (z Notion)
+
+- Podstawowe: `slug`, `nazwa`, `opis`, `adres_id`, `organizacja_id`, `telefon`, `stronaWww`, `godzinyOtwarcia`, `nabozenstwa`, `obraz`, `duchowienstwo`, `mapaUrl`
+- Adres/geo: adres, geo (lat/lng)
+- Relacje: diecezja, dekanat (opcjonalnie)
+- Tagi: typ, styl, patron, udogodnienia (opcjonalnie)
+
+## Dane bezpośrednio do Directus
+
+Dane są dodawane bezpośrednio do Directus (panel lub import). Brak endpointu importu w tym projekcie.

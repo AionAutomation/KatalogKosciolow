@@ -1,0 +1,56 @@
+---
+description: Struktura URL i routing (IA z Notion)
+globs: "**/pages/**"
+alwaysApply: false
+---
+
+# Struktura strony (IA) + URL-e
+
+## 1) Strona główna
+
+- `/`
+- Sekcje: wyszukiwarka, popularne miasta/regiony, kategorie, blog, ostatnio dodane.
+
+## 2) Wyszukiwanie i listing
+
+- `/koscioly` (listing główny)
+- Filtrowanie: miasto, region, odległość, tagi, udogodnienia.
+- Parametry w URL: segmenty (SEO) lub query (UX):
+  - `/koscioly/warszawa`
+  - `/koscioly/mazowieckie`
+  - `/koscioly/warszawa?tag=...`
+- Unikać długich nazw w URL – zawsze slug (np. `kosciol-sw-anny-warszawa`).
+
+## 3) Strony lokalizacyjne (GEO)
+
+- `/miasta` (hub)
+- `/miasta/[miasto]`
+- `/regiony` (hub)
+- `/regiony/[region]`
+- Opcjonalnie: `/miasta/[miasto]/dzielnice/[dzielnica]`
+
+## 4) Strona szczegółowa kościoła
+
+- `/koscioly/[slug]`
+- Elementy: dane kontaktowe, mapa, zdjęcia, opis, informacje praktyczne.
+- JSON-LD Schema.org osadzony na stronie.
+
+## 5) Kategorie i tagi
+
+- `/kategorie` (hub)
+- `/kategorie/[kategoria]` (np. zabytkowe, nowoczesne, z parkingiem)
+
+## 6) Treści wspierające SEO (Content)
+
+- `/blog`, `/blog/[slug]`
+- Opcjonalnie: FAQ pod lokalizacje („Jak dojechać…”, „Godziny mszy…”)
+
+## 7) Strony systemowe
+
+- `/o-projekcie`
+- `/kontakt`
+- `/polityka-prywatnosci`
+
+## Slug
+
+Przyjazne URL-e z nazwy kościoła. Unikać długich nazw – preferować zwięzły slug.

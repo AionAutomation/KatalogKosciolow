@@ -1,0 +1,39 @@
+---
+description: Kontekst projektu Katalog kościołów
+alwaysApply: true
+---
+
+# Kontekst projektu
+
+**Cel:** Katalog kościołów generujący ruch organiczny dzięki **SEO** i **GEO** (lokalne zapytania). Dane w **Directus** (CMS + API), frontend w **Nuxt** (SSR/SSG) z naciskiem na **Schema.org** (structured data). Scraper/import – osobny projekt.
+
+## Backend / CMS
+
+- Directus jako źródło prawdy dla danych kościołów, mediów, lokalizacji, tagów, relacji i publikacji.
+- Kolekcja `kosciol_katolicki`. API REST/GraphQL do Nuxt.
+- Port Directus: domyślnie 8056 (nuxt.config, AuthService).
+
+## Frontend
+
+- Nuxt: SSR lub pre-render/SSG dla wydajności i indeksowalności.
+- Cache: ISR/edge (zależnie od wdrożenia).
+- sitemap.xml, robots.txt, canonical, hreflang (przy wielojęzyczności).
+
+## SEO + GEO
+
+- Unikalne landing pages dla miast, regionów i kategorii.
+- Przyjazne URL-e i breadcrumbs.
+- Treści wspierające long tail: „kościoły w [miasto]”, „msze w pobliżu”, „parafia [nazwa]”.
+- Mapy i widoki lokalne.
+
+## Model domeny (kościół/parafia)
+
+- nazwa, opis, adres, geo (lat/lng), telefon, e-mail, www
+- zdjęcia i media
+- godziny otwarcia / msze
+- przynależność: diecezja, dekanat (opcjonalnie)
+- tagi: typ, styl, patron, udogodnienia (opcjonalnie)
+
+## Język
+
+Kod, komentarze i komunikaty w **polskim**.

@@ -1,0 +1,45 @@
+---
+description: SEO i Schema.org na stronach
+globs: "**/*.vue"
+alwaysApply: false
+---
+
+# SEO i Structured Data
+
+## Schema.org (JSON-LD)
+
+- Generuj znaczniki JSON-LD na stronach list i szczegółów kościoła.
+- Typy: `Place`, `Church` (lub podobne).
+- Pola: nazwa, adres, geo (lat/lng), godziny, kontakt, zdjęcia, identyfikatory, linki.
+- Spójność: dane JSON-LD muszą być zgodne z treścią strony.
+- Testowanie: Google Rich Results / Schema Markup Validator.
+
+## Meta
+
+- title, description (opisy SEO)
+- canonical, OpenGraph
+
+## Indeksowalność
+
+- SSR/SSG, linkowanie wewnętrzne, breadcrumbs na stronach hierarchicznych.
+
+## Sitemap
+
+- Dynamiczna, dzielona na pliki przy dużej liczbie URL.
+
+## Performance
+
+- Core Web Vitals.
+
+## Przykład useHead
+
+```vue
+useHead({
+  title: church.value?.nazwa ? `${church.value.nazwa} | Katalog kościołów` : 'Kościół | Katalog kościołów',
+  meta: [
+    { name: 'description', content: church.value?.opis_seo || '...' },
+  ],
+})
+```
+
+Dodać: `useHead` z JSON-LD `script` dla Schema.org.
