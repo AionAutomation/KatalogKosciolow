@@ -4,32 +4,9 @@ interface Crumb {
   href?: string
 }
 
-const props = defineProps<{
+defineProps<{
   items: Crumb[]
 }>()
-
-const config = useRuntimeConfig()
-const siteUrl = (config.public?.siteUrl as string) || (typeof window !== 'undefined' ? window.location.origin : '')
-
-const breadcrumbSchema = computed(() => ({
-  '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
-  itemListElement: props.items.map((item, i) => ({
-    '@type': 'ListItem',
-    position: i + 1,
-    name: item.label,
-    ...(item.href && { item: `${siteUrl}${item.href}` }),
-  })),
-}))
-
-useHead({
-  script: computed(() => [
-    {
-      type: 'application/ld+json',
-      innerHTML: JSON.stringify(breadcrumbSchema.value),
-    },
-  ]),
-})
 </script>
 
 <template>

@@ -69,8 +69,8 @@ const WYDARZENIE = {
   meta: { icon: 'event', note: 'Event (schema.org)' },
   fields: [
     { field: 'nazwa', type: 'string', schema: {}, meta: { interface: 'input' } },   // name (Text)
-    { field: 'dataRozpoczecia', type: 'dateTime', schema: {}, meta: { interface: 'datetime' } }, // startDate (DateTime)
-    { field: 'dataZakonczenia', type: 'dateTime', schema: {}, meta: { interface: 'datetime' } }, // endDate (DateTime)
+    { field: 'dataRozpoczecia', type: 'dateTime', schema: { is_nullable: true }, meta: { interface: 'datetime' } }, // startDate (DateTime)
+    { field: 'dataZakonczenia', type: 'dateTime', schema: { is_nullable: true }, meta: { interface: 'datetime' } }, // endDate (DateTime)
     { field: 'kosciol_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } },
   ],
 }
@@ -278,8 +278,8 @@ const GODZINY_OTWARCIA_SZCZEGOLY = {
   meta: { icon: 'schedule', note: 'OpeningHoursSpecification (schema.org)' },
   fields: [
     { field: 'dzienTygodnia', type: 'string', schema: {}, meta: { interface: 'input' } },   // dayOfWeek (Text or DayOfWeek)
-    { field: 'otwarcie', type: 'time', schema: {}, meta: { interface: 'input' } },         // opens (Time)
-    { field: 'zamkniecie', type: 'time', schema: {}, meta: { interface: 'input' } },      // closes (Time)
+    { field: 'otwarcie', type: 'time', schema: { is_nullable: true }, meta: { interface: 'input' } },         // opens (Time) – null gdy dzień zamknięty
+    { field: 'zamkniecie', type: 'time', schema: { is_nullable: true }, meta: { interface: 'input' } },      // closes (Time) – null gdy dzień zamknięty
     { field: 'czySpecjalne', type: 'boolean', schema: {}, meta: { interface: 'boolean' } }, // special (specialOpeningHoursSpecification)
     { field: 'kosciol_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } },
   ],
@@ -292,7 +292,7 @@ const NABOZENSTWO = {
   fields: [
     { field: 'nazwa', type: 'string', schema: {}, meta: { interface: 'input', note: 'Np. Msza św., Różaniec, Adoracja' } },
     { field: 'dzienTygodnia', type: 'string', schema: { is_nullable: true }, meta: { interface: 'input', note: 'Np. Niedziela, Dni powszednie, Sobota' } },
-    { field: 'godzina', type: 'string', schema: {}, meta: { interface: 'input', note: 'Godzina lub godziny, np. 8:00 lub 8:00, 10:00, 12:00' } },
+    { field: 'godzina', type: 'string', schema: { is_nullable: true }, meta: { interface: 'input', note: 'Godzina lub godziny, np. 8:00 lub 8:00, 10:00, 12:00' } },
     { field: 'uwagi', type: 'text', schema: { is_nullable: true }, meta: { interface: 'input-multiline', note: 'Opcjonalne uwagi' } },
     { field: 'kosciol_id', type: 'integer', schema: { is_nullable: true }, meta: { interface: 'select-dropdown-m2o' } },
   ],
@@ -305,7 +305,7 @@ const DUCHOWIENSTWO = {
   fields: [
     { field: 'tytul', type: 'string', schema: { is_nullable: true }, meta: { interface: 'input', note: 'Tytuł przed imieniem, np. ks., bp., o.' } },
     { field: 'imie', type: 'string', schema: {}, meta: { interface: 'input' } },
-    { field: 'nazwisko', type: 'string', schema: {}, meta: { interface: 'input' } },
+    { field: 'nazwisko', type: 'string', schema: { is_nullable: true }, meta: { interface: 'input' } },
     { field: 'rola', type: 'string', schema: { is_nullable: true }, meta: { interface: 'input', note: 'Rola w parafii/kościele' } },
     { field: 'dodatkowo', type: 'string', schema: { is_nullable: true }, meta: { interface: 'input', note: 'Np. Wicedziekan, opiekun, katecheta' } },
     { field: 'kontakt', type: 'string', schema: { is_nullable: true }, meta: { interface: 'input', note: 'Telefon, e-mail itp.' } },

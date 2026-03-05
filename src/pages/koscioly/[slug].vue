@@ -9,6 +9,17 @@ const { data: church, error } = await useFetch(`/api/koscioly/${slug}`, {
 })
 
 const directusUrl = (config.public?.directusUrl as string) || ''
+const siteUrl = (config.public?.siteUrl as string) || (typeof window !== 'undefined' ? window.location.origin : '')
+
+const breadcrumbSchema = computed(() => ({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Strona główna', item: `${siteUrl}/` },
+    { '@type': 'ListItem', position: 2, name: 'Kościoły', item: `${siteUrl}/koscioly` },
+    { '@type': 'ListItem', position: 3, name: church.value?.nazwa || 'Kościół' },
+  ],
+}))
 
 const placeSchema = computed(() => {
   const c = church.value
@@ -36,11 +47,16 @@ useHead({
   meta: [
     { name: 'description', content: church.value?.krotkiOpisWyrozniajacy || church.value?.opis?.slice(0, 160) || church.value?.nazwa || '' },
   ],
-  script: computed(() =>
-    placeSchema.value
-      ? [{ type: 'application/ld+json', innerHTML: JSON.stringify(placeSchema.value) }]
-      : [],
-  ),
+  script: computed(() => {
+    const scripts: { type: string; innerHTML: string }[] = []
+    if (breadcrumbSchema.value) {
+      scripts.push({ type: 'application/ld+json', innerHTML: JSON.stringify(breadcrumbSchema.value) })
+    }
+    if (placeSchema.value) {
+      scripts.push({ type: 'application/ld+json', innerHTML: JSON.stringify(placeSchema.value) })
+    }
+    return scripts
+  }),
 })
 </script>
 
