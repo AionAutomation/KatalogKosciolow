@@ -3,6 +3,19 @@
  */
 import { slugify } from './directus.js'
 
+/** Klucze pól O2M w payloadzie (tablice powiązane z kosciol_id) */
+export const O2M_KEYS = [
+  'nabozenstwo',
+  'duchowienstwo',
+  'wydarzenie',
+  'godziny_otwarcia_szczegoly',
+  'cechy_obiektu',
+  'dodatkowa_wlasciwosc',
+  'certyfikat',
+  'opinia',
+  'relacje_przestrzenne',
+]
+
 /** Usuwa klucze o wartości null/undefined z obiektu */
 export function omitNull(obj) {
   if (obj === null || typeof obj !== 'object') return obj
@@ -136,5 +149,51 @@ export function transformPayload(raw) {
     }))
   }
 
+  if (Array.isArray(raw.dodatkowa_wlasciwosc) && raw.dodatkowa_wlasciwosc.length > 0) {
+    payload.dodatkowa_wlasciwosc = raw.dodatkowa_wlasciwosc.map((d) => omitNull({
+      nazwa: d.nazwa ?? null,
+      wartosc: d.wartosc ?? null,
+    }))
+  }
+
+  if (Array.isArray(raw.certyfikat) && raw.certyfikat.length > 0) {
+    payload.certyfikat = raw.certyfikat.map((c) => omitNull({
+      nazwa: c.nazwa ?? null,
+      stronaWww: c.stronaWww ?? null,
+    }))
+  }
+
+  if (Array.isArray(raw.opinia) && raw.opinia.length > 0) {
+    payload.opinia = raw.opinia.map((o) => omitNull({
+      autor: o.autor ?? null,
+      trescOpinii: o.trescOpinii ?? null,
+      ocena: o.ocena ?? null,
+    }))
+  }
+
+  if (Array.isArray(raw.relacje_przestrzenne) && raw.relacje_przestrzenne.length > 0) {
+    payload.relacje_przestrzenne = raw.relacje_przestrzenne.map((r) => omitNull({
+      zawartyWMiejscu: r.zawartyWMiejscu ?? null,
+      zawieraMiejsce: r.zawieraMiejsce ?? null,
+    }))
+  }
+
   return payload
+}
+
+/**
+ * Dzieli payload na główny (do POST kosciol_katolicki) i tablice O2M do zapisu osobno.
+ * Zwraca { mainPayload, o2mItems } – mainPayload bez kluczy O2M, o2mItems np. { nabozenstwo: [...], ... }.
+ * Używane przy dwufazowym imporcie (najpierw kościół, potem POST /items/nabozenstwo itd. z kosciol_id).
+ */
+export function splitPayloadForO2M(fullPayload) {
+  const mainPayload = { ...fullPayload }
+  const o2mItems = {}
+  for (const key of O2M_KEYS) {
+    if (Array.isArray(fullPayload[key]) && fullPayload[key].length > 0) {
+      o2mItems[key] = fullPayload[key]
+      delete mainPayload[key]
+    }
+  }
+  return { mainPayload, o2mItems }
 }

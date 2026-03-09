@@ -1,6 +1,6 @@
-# Directus + PostgreSQL w Dockerze (port 8056 zamiast domyślnego 8055)
+# Directus + PostgreSQL w Dockerze (port 8057; 8055 zajęty; Nginx na 8056)
 # Uruchomienie: docker compose up -d
-# Panel: http://localhost:8056
+# Panel przez Nginx: http://db.aionflow.pl:8056
 
 services:
   postgres:
@@ -27,7 +27,7 @@ services:
     container_name: katalog-directus
     restart: unless-stopped
     ports:
-      - "${DIRECTUS_PORT:-8056}:8055"
+      - "${DIRECTUS_PORT:-8057}:8055"
     environment:
       KEY: ${KEY}
       SECRET: ${SECRET}
@@ -37,7 +37,7 @@ services:
       DB_DATABASE: ${POSTGRES_DB:-directus}
       DB_USER: ${POSTGRES_USER:-directus}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-directus}
-      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8056}
+      PUBLIC_URL: ${PUBLIC_URL:-http://db.aionflow.pl:8056}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
     volumes:

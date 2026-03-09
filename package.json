@@ -12,6 +12,7 @@
     "postinstall": "nuxt prepare",
     "init-db": "node scripts/init-db.js",
     "fill-slug": "node scripts/fill-slug-existing.js",
+    "test-o2m": "node scripts/test-o2m-import.js",
     "directus:start": "PORT=8056 PUBLIC_URL=http://localhost:8056 npx directus start"
   },
   "dependencies": {
