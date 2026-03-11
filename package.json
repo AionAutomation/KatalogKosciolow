@@ -12,6 +12,11 @@
     "postinstall": "nuxt prepare",
     "init-db": "node scripts/init-db.js",
     "fill-slug": "node scripts/fill-slug-existing.js",
+    "backfill-miasto": "node scripts/backfill-miasto-for-adres.js",
+    "analyze-geo-duplicates": "node scripts/analyze-structure-duplicates.js",
+    "merge-geo-duplicates": "node scripts/merge-structure-duplicates.js",
+    "normalize-names-archi-dekanat": "node scripts/normalize-names-archidiecezja-dekanat.js",
+    "test-geo": "node scripts/test-geo-relations.js",
     "test-o2m": "node scripts/test-o2m-import.js",
     "directus:start": "PORT=8056 PUBLIC_URL=http://localhost:8056 npx directus start"
   },

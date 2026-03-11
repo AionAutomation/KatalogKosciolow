@@ -1,0 +1,212 @@
+{
+  "name": "kosciol_katolicki_ekstrakcja",
+  "description": "Zwraca ustrukturyzowane dane o kościele katolickim ściśle według schematu bazy Directus. Wszystkie kolekcje: kosciol_katolicki, adres_pocztowy (adres_id), organizacja, ocena_zbiorcza, archidiecezja, dekanat, region, miasto, nabozenstwo, duchowienstwo, wydarzenie, godziny_otwarcia_szczegoly, cechy_obiektu, dodatkowa_wlasciwosc, certyfikat, opinia, relacje_przestrzenne.",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "nazwa": { "type": "string", "description": "Główna nazwa kościoła lub parafii (wymagane)." },
+      "opis": { "type": ["string", "null"], "description": "Długi opis, historia, architektura." },
+      "krotkiOpisWyrozniajacy": { "type": ["string", "null"] },
+      "stronaWww": { "type": ["string", "null"] },
+      "alternatywnaNazwa": { "type": ["string", "null"] },
+      "glownyTematStrony": { "type": ["string", "null"] },
+      "linkiZewnetrzne": { "type": ["string", "null"] },
+      "telefon": { "type": ["string", "null"] },
+      "faks": { "type": ["string", "null"] },
+      "slogan": { "type": ["string", "null"] },
+      "slowaKluczowe": { "type": ["string", "null"] },
+      "szerokoscGeograficzna": { "type": ["number", "null"] },
+      "dlugoscGeograficzna": { "type": ["number", "null"] },
+      "godzinyOtwarcia": { "type": ["string", "null"], "description": "Krótki tekst np. Pon-Pt 8-18" },
+      "mapaUrl": { "type": ["string", "null"] },
+      "linkCyfrowyGS1": { "type": ["string", "null"] },
+      "region": {
+        "type": ["object", "null"],
+        "additionalProperties": false,
+        "description": "Województwo (GEO). Używane do deduplikacji słownika region.",
+        "properties": { "nazwa": { "type": ["string", "null"] } }
+      },
+      "miasto": {
+        "type": ["object", "null"],
+        "additionalProperties": false,
+        "description": "Miasto (GEO). Jeśli brak, używane jest adres_id.miejscowosc.",
+        "properties": { "nazwa": { "type": ["string", "null"] } }
+      },
+      "adres_id": {
+        "type": ["object", "null"],
+        "additionalProperties": false,
+        "description": "Adres pocztowy (kolekcja adres_pocztowy). region – województwo, używane do powiązania z miastem.",
+        "properties": {
+          "ulicaIBudynek": { "type": ["string", "null"] },
+          "miejscowosc": { "type": ["string", "null"] },
+          "kodPocztowy": { "type": ["string", "null"] },
+          "kraj": { "type": ["string", "null"] },
+          "region": { "type": ["string", "null"], "description": "Województwo (np. zachodniopomorskie)" }
+        },
+        "required": ["ulicaIBudynek", "miejscowosc", "kodPocztowy", "kraj"]
+      },
+      "organizacja_id": {
+        "type": ["object", "null"],
+        "additionalProperties": false,
+        "description": "Organizacja – właściciel/parafia (kolekcja organizacja).",
+        "properties": {
+          "nazwa": { "type": ["string", "null"] },
+          "typ": { "type": ["string", "null"] },
+          "telefon": { "type": ["string", "null"] },
+          "stronaWww": { "type": ["string", "null"] }
+        }
+      },
+      "ocenaZbiorcza_id": {
+        "type": ["object", "null"],
+        "additionalProperties": false,
+        "description": "AggregateRating (kolekcja ocena_zbiorcza).",
+        "properties": {
+          "sredniaOcena": { "type": ["number", "null"] },
+          "liczbaOpinii": { "type": ["integer", "null"] }
+        }
+      },
+      "dekanat_id": {
+        "type": ["object", "null"],
+        "additionalProperties": false,
+        "description": "Dekanat z archidiecezją (kolekcje dekanat, archidiecezja).",
+        "properties": {
+          "nazwa": { "type": ["string", "null"] },
+          "archidiecezja_id": {
+            "type": ["object", "null"],
+            "additionalProperties": false,
+            "properties": { "nazwa": { "type": ["string", "null"] } }
+          }
+        }
+      },
+      "cechy_obiektu": {
+        "type": "array",
+        "description": "Kolekcja cechy_obiektu (Place: isAccessibleForFree, publicAccess, smokingAllowed, capacity, driveThrough, tourBookingPage, branchCode, globalLocationNumber, isicV4).",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "darmowyWstep": { "type": ["boolean", "null"] },
+            "dostepPubliczny": { "type": ["boolean", "null"] },
+            "moznaPalic": { "type": ["boolean", "null"] },
+            "maksymalnaPojemnosc": { "type": ["integer", "null"] },
+            "obslugaDriveThrough": { "type": ["boolean", "null"] },
+            "stronaRezerwacjiWycieczek": { "type": ["string", "null"] },
+            "kodOddzialu": { "type": ["string", "null"] },
+            "globalnyNumerLokalizacyjny": { "type": ["string", "null"] },
+            "kodISICV4": { "type": ["string", "null"] }
+          }
+        }
+      },
+      "relacje_przestrzenne": {
+        "type": "array",
+        "description": "Kolekcja relacje_przestrzenne (containedInPlace, containsPlace).",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "zawartyWMiejscu": { "type": ["string", "null"] },
+            "zawieraMiejsce": { "type": ["string", "null"] }
+          }
+        }
+      },
+      "certyfikat": {
+        "type": "array",
+        "description": "Kolekcja certyfikat (Certification).",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "nazwa": { "type": ["string", "null"] },
+            "stronaWww": { "type": ["string", "null"] }
+          }
+        }
+      },
+      "dodatkowa_wlasciwosc": {
+        "type": "array",
+        "description": "Kolekcja dodatkowa_wlasciwosc (PropertyValue).",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "nazwa": { "type": ["string", "null"] },
+            "wartosc": { "type": ["string", "null"] }
+          }
+        }
+      },
+      "opinia": {
+        "type": "array",
+        "description": "Kolekcja opinia (Review).",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "autor": { "type": ["string", "null"] },
+            "trescOpinii": { "type": ["string", "null"] },
+            "ocena": { "type": ["integer", "null"] }
+          }
+        }
+      },
+      "wydarzenie": {
+        "type": "array",
+        "description": "Kolekcja wydarzenie (Event).",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "nazwa": { "type": ["string", "null"] },
+            "dataRozpoczecia": { "type": ["string", "null"], "description": "ISO 8601 dateTime" },
+            "dataZakonczenia": { "type": ["string", "null"], "description": "ISO 8601 dateTime" }
+          }
+        }
+      },
+      "godziny_otwarcia_szczegoly": {
+        "type": "array",
+        "description": "Kolekcja godziny_otwarcia_szczegoly (OpeningHoursSpecification).",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "dzienTygodnia": { "type": ["string", "null"] },
+            "otwarcie": { "type": ["string", "null"], "description": "Czas np. 08:00" },
+            "zamkniecie": { "type": ["string", "null"], "description": "Czas np. 18:00" },
+            "czySpecjalne": { "type": ["boolean", "null"] }
+          }
+        }
+      },
+      "nabozenstwo": {
+        "type": "array",
+        "description": "Kolekcja nabozenstwo (msze, różaniec, adoracja).",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "nazwa": { "type": ["string", "null"] },
+            "dzienTygodnia": { "type": ["string", "null"] },
+            "godzina": { "type": ["string", "null"] },
+            "uwagi": { "type": ["string", "null"] }
+          }
+        }
+      },
+      "duchowienstwo": {
+        "type": "array",
+        "description": "Kolekcja duchowienstwo (kapłani, rola, dyżur w konfesjonale).",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tytul": { "type": ["string", "null"] },
+            "imie": { "type": ["string", "null"] },
+            "nazwisko": { "type": ["string", "null"] },
+            "rola": { "type": ["string", "null"] },
+            "dodatkowo": { "type": ["string", "null"] },
+            "kontakt": { "type": ["string", "null"] },
+            "dyzurKonfesjonal": { "type": ["string", "null"] }
+          }
+        }
+      }
+    },
+    "required": ["nazwa"]
+  }
+}

@@ -26,4 +26,12 @@ export default defineNuxtConfig({
       '#config': join(__dirname, 'config'),
     },
   },
+  vite: {
+    resolve: {
+      alias: {
+        // Workaround: błąd "Failed to resolve import #app-manifest" w Nuxt 3.14+ (Vite pre-transform)
+        '#app-manifest': join(__dirname, 'scripts/empty-manifest.js'),
+      },
+    },
+  },
 })

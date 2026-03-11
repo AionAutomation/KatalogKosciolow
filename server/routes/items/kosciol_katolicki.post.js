@@ -1,13 +1,11 @@
 /**
  * POST /items/kosciol_katolicki – zgodna z Directus ścieżka do importu kościoła.
  * Przyjmuje pełny JSON (adres, organizacja, dekanat, cechy, nabożeństwa, duchowieństwo),
- * transformuje i zapisuje w Directus. Zapis O2M (nabozenstwo, duchowienstwo, itd.) realizowany
- * dwufazowo: najpierw kościół, potem rekordy w kolekcjach potomnych z kosciol_id.
+ * upsertuje słowniki (region, miasto, archidiecezja, dekanat, adres, organizacja) z normalizacją,
+ * zapisuje kościół i rekordy O2M. Jedno wywołanie upsertChurchData.
  */
 import { createDirectusClient } from '#config/AuthService.js'
-import { transformPayload, splitPayloadForO2M } from '../../utils/import-kosciol.js'
-
-const COLLECTION = 'kosciol_katolicki'
+import { upsertChurchData } from '../../utils/upsert-dictionaries.js'
 
 export default defineEventHandler(async (event) => {
   const method = getMethod(event)
@@ -36,27 +34,10 @@ export default defineEventHandler(async (event) => {
     token: config.directus?.token,
   })
 
-  const fullPayload = transformPayload(body)
-  const { mainPayload, o2mItems } = splitPayloadForO2M(fullPayload)
-
   try {
-    const res = await directus.post(`/items/${COLLECTION}`, mainPayload)
-    const data = res?.data ?? res
-    const item = Array.isArray(data) ? data[0] : data
-    const churchId = item?.id
-    if (!churchId) {
-      setResponseStatus(event, 201)
-      return data
-    }
-
-    for (const [key, rows] of Object.entries(o2mItems)) {
-      for (const row of rows) {
-        await directus.post(`/items/${key}`, { ...row, kosciol_id: churchId })
-      }
-    }
-
+    const result = await upsertChurchData(directus, body)
     setResponseStatus(event, 201)
-    return { ...item, id: churchId }
+    return result
   } catch (err) {
     const msg =
       err.response?.data?.errors?.[0]?.message ??

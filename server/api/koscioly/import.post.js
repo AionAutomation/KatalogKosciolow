@@ -1,11 +1,9 @@
 /**
  * POST /api/koscioly/import – import kościoła z pełnym JSON (adres, organizacja, dekanat, cechy, nabożeństwa, duchowieństwo).
- * Zapisuje dane w Directus z zachowaniem relacji M2O i O2M.
+ * Używa upsertChurchData – słowniki GEO i powiązane są normalizowane (getOrCreate*), zapis O2M dwufazowy.
  */
 import { createDirectusClient } from '#config/AuthService.js'
-import { transformPayload } from '../../utils/import-kosciol.js'
-
-const COLLECTION = 'kosciol_katolicki'
+import { upsertChurchData } from '../../utils/upsert-dictionaries.js'
 
 export default defineEventHandler(async (event) => {
   const method = getMethod(event)
@@ -34,13 +32,10 @@ export default defineEventHandler(async (event) => {
     token: config.directus?.token,
   })
 
-  const payload = transformPayload(body)
-
   try {
-    const res = await directus.post(`/items/${COLLECTION}`, payload)
-    const data = res?.data ?? res
+    const result = await upsertChurchData(directus, body)
     setResponseStatus(event, 201)
-    return data
+    return result
   } catch (err) {
     const msg =
       err.response?.data?.errors?.[0]?.message ??

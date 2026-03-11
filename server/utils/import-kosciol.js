@@ -53,7 +53,9 @@ export function transformPayload(raw) {
     payload.slug = slugify(raw.nazwa) || null
   }
 
-  if (raw.adres_id && typeof raw.adres_id === 'object') {
+  if (raw.adres_id != null && typeof raw.adres_id === 'number') {
+    payload.adres_id = raw.adres_id
+  } else if (raw.adres_id && typeof raw.adres_id === 'object') {
     payload.adres_id = omitNull({
       ulicaIBudynek: raw.adres_id.ulicaIBudynek ?? null,
       miejscowosc: raw.adres_id.miejscowosc ?? null,
@@ -63,7 +65,9 @@ export function transformPayload(raw) {
     if (Object.keys(payload.adres_id).length === 0) delete payload.adres_id
   }
 
-  if (raw.organizacja_id && typeof raw.organizacja_id === 'object') {
+  if (raw.organizacja_id != null && typeof raw.organizacja_id === 'number') {
+    payload.organizacja_id = raw.organizacja_id
+  } else if (raw.organizacja_id && typeof raw.organizacja_id === 'object') {
     payload.organizacja_id = omitNull({
       nazwa: raw.organizacja_id.nazwa ?? null,
       typ: raw.organizacja_id.typ ?? null,
@@ -74,14 +78,18 @@ export function transformPayload(raw) {
   }
 
   const oza = raw.ocenaZbiorcza_id
-  if (oza && typeof oza === 'object' && (oza.sredniaOcena != null || oza.liczbaOpinii != null)) {
+  if (oza != null && typeof oza === 'number') {
+    payload.ocenaZbiorcza_id = oza
+  } else if (oza && typeof oza === 'object' && (oza.sredniaOcena != null || oza.liczbaOpinii != null)) {
     payload.ocenaZbiorcza_id = {
       sredniaOcena: oza.sredniaOcena ?? 0,
       liczbaOpinii: oza.liczbaOpinii ?? 0,
     }
   }
 
-  if (raw.dekanat_id && typeof raw.dekanat_id === 'object') {
+  if (raw.dekanat_id != null && typeof raw.dekanat_id === 'number') {
+    payload.dekanat_id = raw.dekanat_id
+  } else if (raw.dekanat_id && typeof raw.dekanat_id === 'object') {
     const dek = raw.dekanat_id
     payload.dekanat_id = omitNull({
       nazwa: dek.nazwa ?? null,

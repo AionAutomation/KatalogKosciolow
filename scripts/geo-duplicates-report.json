@@ -1,0 +1,58 @@
+{
+  "generatedAt": "2026-03-11T14:40:09.551Z",
+  "archidiecezja": {
+    "total": 14,
+    "duplicateGroups": 0,
+    "groups": []
+  },
+  "dekanat": {
+    "total": 31,
+    "duplicateGroups": 3,
+    "groups": [
+      {
+        "key": "szczecin-pogodno::3",
+        "canonicalId": 11,
+        "ids": [
+          11,
+          12
+        ],
+        "names": [
+          "Szczecin-Pogodno",
+          "Szczecin-Pogodno"
+        ]
+      },
+      {
+        "key": "gdańsk – śródmieście::1",
+        "canonicalId": 18,
+        "ids": [
+          18,
+          19,
+          20,
+          21
+        ],
+        "names": [
+          "Gdańsk – Śródmieście",
+          "Gdańsk – Śródmieście",
+          "Gdańsk – Śródmieście",
+          "Gdańsk – Śródmieście"
+        ]
+      },
+      {
+        "key": "dekanatu śródmieście północne::23",
+        "canonicalId": 23,
+        "ids": [
+          23,
+          24,
+          25,
+          26
+        ],
+        "names": [
+          "Dekanatu Śródmieście Północne",
+          "Dekanatu Śródmieście Północne",
+          "Dekanatu Śródmieście Północne",
+          "Dekanatu Śródmieście Północne"
+        ]
+      }
+    ]
+  }
+}
